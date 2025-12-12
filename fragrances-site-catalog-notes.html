@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfumov Men Fragrances - Note Lookup</title>
+    
+    <!-- Favicon / Page Tab Icon -->
+    <link rel="icon" type="image/gif" href="perfumo.gif">
+    
+    <!-- Tailwind CSS for Styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- PapaParse for robust CSV parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Lato', sans-serif;
+            background-color: #f8f8f8;
+            color: #333;
+        }
+        h1, h2, h3, .serif-font {
+            font-family: 'Playfair Display', serif;
+        }
+        .accord-pill {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.6rem;
+            border-radius: 9999px;
+            text-transform: capitalize;
+            white-space: nowrap;
+            display: inline-block;
+            margin-right: 0.25rem;
+            margin-bottom: 0.25rem;
+            background-color: #e5e7eb;
+            color: #374151;
+            transition: all 0.2s;
+        }
+        .accord-pill:hover {
+            background-color: #d1d5db;
+        }
+        .card-transition {
+            transition: all 0.3s ease-in-out;
+        }
+        .card-transition:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        .image-container {
+            width: 4rem; 
+            height: 4rem; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.5rem; 
+            overflow: hidden;
+            flex-shrink: 0;
+            background-color: #f3f4f6;
+        }
+        .image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain; 
+        }
+        
+        /* Note pill styling for clickable notes */
+        .note-pill {
+            font-size: 0.9rem;
+            padding: 0 0.25rem;
+            margin-right: 0.5rem;
+            display: inline-block;
+            cursor: pointer;
+            color: #6d28d9; /* Deep purple for links/interactivity */
+            border-bottom: 1px dashed #c4b5fd;
+            transition: color 0.15s;
+        }
+        .note-pill:hover {
+            color: #4c1d95;
+            border-bottom: 1px dashed #4c1d95;
+        }
+
+        /* Modal Specific Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            border-radius: 0.75rem; 
+            max-width: 90%;
+            max-height: 90%;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+        .modal-close-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            z-index: 1010;
+        }
+        .iframe-container {
+            width: 90vw;
+            height: 80vh;
+        }
+        @media (min-width: 768px) {
+            .iframe-container {
+                width: 75vw;
+                height: 90vh;
+            }
+        }
+        
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Header / Navbar -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-6">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                
+                <!-- Title and Profile Image -->
+                <div class="flex items-center gap-3 text-center md:text-left">
+                    <!-- Profile Image (70x70) - Now Squared, Rounded, Cropped, and Clickable -->
+                    <div class="flex-shrink-0 w-[70px] h-[70px] hidden sm:block rounded-xl overflow-hidden border-2 border-gray-200 cursor-pointer">
+                        <a href="#" onclick="event.preventDefault(); openIframeModal('https://www.fragrantica.com/member/2540562', 'Perfumov Fragrantica Profile');" 
+                           class="block w-full h-full">
+                            <img src="perfumo.gif" alt="Perfumov Logo" 
+                                 class="w-full h-full object-cover transition duration-300 hover:opacity-80"
+                                 onerror="this.onerror=null; this.src='https://placehold.co/70x70/B0B0B0/FFFFFF?text=P';">
+                        </a>
+                    </div>
+                    
+                    <!-- Title Text -->
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900 tracking-wide">PERFUMOV'S OLFACTORY LIBRARY</h1>
+                        <p class="text-gray-500 text-sm mt-1">Men Fragrances for Decant, Swap and Trade</p>
+                    </div>
+                </div>
+                
+                <div class="relative w-full md:w-1/3">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i data-lucide="search" class="text-gray-400 h-5 w-5"></i>
+                    </div>
+                    <input type="text" id="searchInput" 
+                        class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-gray-50 placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:border-gray-500 focus:ring-1 focus:ring-gray-500 sm:text-sm transition duration-150 ease-in-out" 
+                        placeholder="Search brand, fragrance, accord, description, and more...">
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main id="mainContent" class="flex-grow container mx-auto px-4 py-8">
+        <!-- Stats Bar -->
+        <div class="flex justify-between items-center mb-6">
+            <span id="resultCount" class="text-sm font-semibold text-gray-500">Awaiting data files...</span>
+            <div class="text-xs text-gray-400 italic">Si vis pacem, per fumum</div>
+        </div>
+        
+        <!-- Manual Load Buttons (Initial Position - In Main Content) -->
+        <div id="loadButtonContainer" class="text-center py-4 mb-8 bg-gray-100 border border-gray-200 rounded-xl space-y-4 md:flex md:justify-around md:space-y-0 md:space-x-4 p-6">
+            <p id="loadHint" class="text-sm text-gray-600 font-semibold md:w-1/3">
+                Load your data files (automatic loading likely blocked locally):
+            </p>
+
+            <!-- Load Fragrance Catalog -->
+            <div class="flex flex-col items-center flex-1">
+                <input type="file" id="fragranceFileInput" accept=".csv" class="hidden">
+                <button onclick="document.getElementById('fragranceFileInput').click()"
+                        class="w-full bg-gray-900 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-700 transition duration-150 ease-in-out shadow-md flex items-center justify-center gap-2">
+                    <i data-lucide="flask-conical" class="w-5 h-5"></i>
+                    Load Fragrance Catalog (<span id="fragranceStatus">Not Loaded</span>)
+                </button>
+            </div>
+            
+            <!-- Load Note Definitions -->
+            <div class="flex flex-col items-center flex-1">
+                <input type="file" id="notesFileInput" accept=".csv" class="hidden">
+                <button onclick="document.getElementById('notesFileInput').click()"
+                        class="w-full bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 transition duration-150 ease-in-out shadow-md flex items-center justify-center gap-2">
+                    <i data-lucide="book-open-text" class="w-5 h-5"></i>
+                    Load Note Definitions (<span id="notesStatus">Not Loaded</span>)
+                </button>
+            </div>
+        </div>
+
+        <!-- Grid Container -->
+        <div id="catalogGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Cards will be injected here via JS -->
+        </div>
+
+        <!-- No Results State -->
+        <div id="noResults" class="hidden text-center py-20">
+            <i data-lucide="flask-conical-off" class="mx-auto h-12 w-12 text-gray-300"></i>
+            <h3 class="mt-2 text-lg font-medium text-gray-900">No fragrances found</h3>
+            <p class="mt-1 text-sm text-gray-500">Load the Fragrance Catalog CSV to begin.</p>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer id="appFooter" class="bg-gray-900 text-white py-8 mt-12">
+        <div id="footerContent" class="container mx-auto px-4 text-center">
+            <p class="serif-font text-lg">The Essence of Memory</p>
+            <p class="text-gray-500 text-xs mt-2">Men Fragrances Collection Catalog</p>
+        </div>
+        <!-- The loadButtonContainer will be moved here when data is fully loaded -->
+    </footer>
+
+    <!-- MODAL STRUCTURE (Hidden by default) -->
+    <div id="appModal" class="modal-overlay hidden" onclick="if(event.target.id === 'appModal') closeModal()">
+        <div id="modalContent" class="modal-content">
+            <!-- Modal Header (for iFrame/Title) -->
+            <div id="modalHeader" class="p-4 bg-gray-50 border-b border-gray-200 hidden">
+                <h3 id="modalTitle" class="text-lg font-semibold text-gray-900"></h3>
+            </div>
+            
+            <!-- Content Area (Image, Iframe, or Note Definition) -->
+            <div id="modalContentArea" class="modal-image-container flex justify-center items-center p-4">
+                <!-- Content will be injected here -->
+            </div>
+            
+            <!-- Close Button -->
+            <button onclick="closeModal()" class="modal-close-btn p-2 rounded-full bg-white text-gray-700 hover:bg-gray-200 transition-colors shadow-lg">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+        </div>
+    </div>
+    <!-- END MODAL STRUCTURE -->
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- 1. CONFIGURATION ---
+        const AUTO_FRAGRANCE_FILE = 'Fragrances.csv'; 
+        const AUTO_NOTES_FILE = 'Notes.csv'; 
+        
+        const EXCLUDED_COLUMNS_COUNT = 3; 
+        const INGREDIENT_DISPLAY_LIMIT = 800; 
+        
+        // Define parents for easy movement
+        const MAIN_CONTENT = document.getElementById('mainContent');
+        const FOOTER = document.getElementById('appFooter');
+        const CATALOG_GRID = document.getElementById('catalogGrid');
+
+        // Define CSS class strings for the two states
+        const LOAD_BAR_INITIAL_CLASSES = 'text-center py-4 mb-8 bg-gray-100 border border-gray-200 rounded-xl space-y-4 md:flex md:justify-around md:space-y-0 md:space-x-4 p-6';
+        // New class set for the dark footer environment, removing fixed positioning
+        const LOAD_BAR_FOOTER_CLASSES = 'w-full pt-4 mt-8 border-t border-gray-700 flex flex-col md:flex-row items-center justify-center gap-4 px-4';
+
+
+        // --- 2. APP STATE ---
+        let allFragrances = [];
+        let allNotes = new Map(); // Stores {NoteName: Description}
+        let fragranceDataLoaded = false;
+        let notesDataLoaded = false;
+        let currentSearchQuery = ''; // NEW: Stores the current query for highlighting
+
+        const modal = document.getElementById('appModal');
+        const modalContent = document.getElementById('modalContent');
+        const modalContentArea = document.getElementById('modalContentArea');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalHeader = document.getElementById('modalHeader');
+        
+        // --- UTILITY FUNCTION FOR ESCAPING QUOTES ---
+        function escapeQuotes(str) {
+            if (!str) return '';
+            return str.replace(/'/g, "\\'");
+        }
+        
+        // --- NEW: TEXT HIGHLIGHTING UTILITY ---
+        function highlightText(text, query) {
+            if (!query || !text || text.length === 0) return text;
+            
+            // Escape special regex characters (like *, +, ?, etc.) in the query
+            const escapedQuery = query.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+            
+            // g = global match, i = case insensitive
+            const regex = new RegExp(`(${escapedQuery})`, 'gi');
+            
+            // Replacement function to wrap the match ($1) in a styled span
+            const highlightClass = "bg-yellow-200 font-semibold rounded px-[2px] transition-colors duration-150";
+            return text.replace(regex, `<span class="${highlightClass}">$1</span>`);
+        }
+
+
+        // --- 3. DATA PROCESSING & RENDERING ---
+
+        function processData(data) {
+            allFragrances = data.map((row, index) => {
+                const keys = Object.keys(row);
+                // Adjusting slice to safely get columns
+                const validKeys = keys.length > EXCLUDED_COLUMNS_COUNT ? keys.slice(0, keys.length - EXCLUDED_COLUMNS_COUNT) : keys;
+                
+                const cleanObj = {};
+                validKeys.forEach(key => {
+                    cleanObj[key] = row[key];
+                });
+
+                cleanObj._id = `frag_${index}`;
+                return cleanObj;
+            }).filter(frag => frag['Fragrance Name']);
+
+            fragranceDataLoaded = true;
+            // Display initial total count
+            document.getElementById('resultCount').textContent = `${allFragrances.length} Fragrances Displayed`;
+            renderGrid(allFragrances);
+            updateStatus();
+        }
+
+        function processNotesData(data) {
+            allNotes.clear();
+            data.forEach(row => {
+                const note = row['Note'] ? row['Note'].trim() : null;
+                const description = row['Description'] ? row['Description'].trim() : null;
+                
+                if (note && description) {
+                    allNotes.set(note, description);
+                    allNotes.set(note.toLowerCase(), description);
+                }
+            });
+
+            notesDataLoaded = true;
+            updateStatus();
+            if (fragranceDataLoaded) {
+                renderGrid(allFragrances);
+            }
+        }
+
+        function updateStatus() {
+            const fStatus = document.getElementById('fragranceStatus');
+            const nStatus = document.getElementById('notesStatus');
+            const loadContainer = document.getElementById('loadButtonContainer');
+
+            if (fragranceDataLoaded) {
+                fStatus.textContent = 'Loaded (Click to Re-load)';
+                fStatus.classList.remove('text-red-500');
+                fStatus.classList.add('text-green-400');
+            } else {
+                fStatus.textContent = 'Not Loaded';
+                fStatus.classList.add('text-red-500');
+            }
+
+            if (notesDataLoaded) {
+                nStatus.textContent = `Loaded (${allNotes.size} definitions)`;
+                nStatus.classList.remove('text-red-500');
+                nStatus.classList.add('text-green-400');
+            } else {
+                nStatus.textContent = 'Not Loaded (Note Lookup Disabled)';
+                nStatus.classList.add('text-red-500');
+            }
+            
+            // --- REPOSITIONING LOGIC ---
+            if (fragranceDataLoaded && notesDataLoaded) {
+                // State: Both loaded, move to footer
+                
+                // 1. Move the container to the end of the footer
+                if (loadContainer.parentElement !== FOOTER) {
+                    FOOTER.appendChild(loadContainer); 
+                }
+                
+                // 2. Set new styles (not fixed, blending into dark footer)
+                loadContainer.className = LOAD_BAR_FOOTER_CLASSES;
+                
+                // 3. Hide hint text and re-style buttons for dark footer
+                document.getElementById('loadHint').classList.add('hidden');
+                document.querySelectorAll('#loadButtonContainer button').forEach(btn => {
+                    btn.classList.remove('bg-gray-900', 'bg-indigo-600', 'hover:bg-gray-700', 'hover:bg-indigo-700');
+                    btn.classList.add('bg-gray-700', 'text-white', 'hover:bg-gray-600', 'flex-1'); 
+                });
+
+            } else {
+                // State: Not fully loaded, keep in main content area
+                
+                // 1. If it was moved, move it back (before the grid)
+                if (loadContainer.parentElement === FOOTER) {
+                    MAIN_CONTENT.insertBefore(loadContainer, CATALOG_GRID);
+                }
+
+                // 2. Reset initial styles
+                loadContainer.className = LOAD_BAR_INITIAL_CLASSES;
+                document.getElementById('loadHint').classList.remove('hidden');
+
+                // 3. Restore button styling
+                document.querySelectorAll('#loadButtonContainer button').forEach(btn => {
+                    btn.classList.remove('bg-gray-700', 'hover:bg-gray-600', 'flex-1');
+                    if (btn.textContent.includes('Fragrance')) {
+                        btn.classList.add('bg-gray-900', 'hover:bg-gray-700');
+                        btn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+                    } else {
+                        btn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+                        btn.classList.remove('bg-gray-900', 'hover:bg-gray-700');
+                    }
+                });
+            }
+        }
+
+        function renderGrid(fragrances) {
+            const grid = document.getElementById('catalogGrid');
+            const noResults = document.getElementById('noResults');
+
+            grid.innerHTML = '';
+
+            if (fragrances.length === 0) {
+                noResults.classList.remove('hidden');
+            } else {
+                noResults.classList.add('hidden');
+            }
+
+            fragrances.forEach(frag => {
+                const card = createCard(frag);
+                grid.appendChild(card);
+            });
+            
+            lucide.createIcons();
+        }
+
+        /**
+         * Parses a note string, treating " and " as a separator, and generates interactive HTML elements.
+         * Now includes highlighting based on currentSearchQuery.
+         */
+        window.renderNotesList = function(noteString) {
+            if (!noteString) return '-';
+            
+            // CRITICAL FIX: Replace " and " (with spaces) with a comma to unify separators.
+            const unifiedString = noteString.replace(/ and /gi, ',');
+            
+            const notes = unifiedString.split(',').map(s => s.trim()).filter(s => s);
+            
+            return notes.map(note => {
+                const escapedNote = escapeQuotes(note);
+                
+                // Apply highlighting to the displayed text
+                let displayNote = note;
+                if (currentSearchQuery) {
+                    displayNote = highlightText(note, currentSearchQuery);
+                }
+
+                // If notes data is loaded, make it clickable
+                if (notesDataLoaded) {
+                    // Note: The click handler must use the UN-HIGHLIGHTED, escaped note name for lookup
+                    return `<span class="note-pill" onclick="openNoteDefinitionModal('${escapedNote}')">${displayNote}</span>`;
+                } else {
+                    return `<span class="inline-block mr-2">${displayNote}</span>`;
+                }
+            }).join('');
+        }
+
+        function createCard(data) {
+            const brand = data['Brand Name'] || 'Unknown Brand';
+            const name = data['Fragrance Name'] || 'Unnamed';
+            const concentration = data['Concentration'] || '';
+            const family = data['Family'] || 'Fragrance';
+            const accords = data['Main Accords'] ? data['Main Accords'].split(',').map(s => s.trim()).filter(s => s) : [];
+            const url = data['Fragrantica Page'] || '#';
+            const imageUrl = data['Thumbnail image'];
+
+            const escapedBrand = escapeQuotes(brand); 
+            const escapedName = escapeQuotes(name); 
+            const escapedConcentration = escapeQuotes(concentration); 
+            
+            // Apply highlighting to main text fields
+            const highlightedBrand = highlightText(brand, currentSearchQuery);
+            const highlightedName = highlightText(name, currentSearchQuery);
+            const description = data['Key Characteristics / Comparisons'] || 'No description available.';
+            const highlightedDescription = highlightText(description, currentSearchQuery);
+            const ingredients = data['Ingredients'] || '';
+            const highlightedIngredients = highlightText(ingredients, currentSearchQuery);
+
+
+            const div = document.createElement('div');
+            div.className = 'bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden card-transition flex flex-col';
+            
+            // --- HEADER SECTION (Visible) ---
+            let html = `
+                <div class="p-6 flex-grow">
+                    <div class="flex justify-between items-start mb-4">
+                        <!-- Image Container - NOW CLICKABLE TO OPEN IMAGE MODAL -->
+                        <div class="image-container ${imageUrl ? 'cursor-pointer' : ''}" 
+                             onclick="${imageUrl ? `openImageModal('${imageUrl}', '${escapedName} Bottle')` : ''}">
+                            ${imageUrl ? 
+                                `<img src="${imageUrl}" alt="${name} bottle" 
+                                      onerror="this.onerror=null; this.src='https://placehold.co/400x400/CCCCCC/333333?text=Image+Unavailable'; this.classList.remove('p-1'); this.parentElement.innerHTML='<i data-lucide=\\'spray-can\\' class=\\'w-6 h-6 text-gray-400\\'></i>';"
+                                      class="p-1">`
+                                : 
+                                `<i data-lucide="spray-can" class="w-6 h-6 text-gray-400"></i>`
+                            }
+                        </div>
+
+                        <div class="text-right">
+                            <span class="inline-block px-2 py-1 text-xs font-semibold tracking-wide text-gray-500 uppercase border border-gray-200 rounded">
+                                ${concentration || 'EDP'}
+                            </span>
+                            <div class="text-xs text-gray-400 mt-1">${data['Launch year'] || ''}</div>
+                        </div>
+                    </div>
+
+                    <h4 class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">${highlightedBrand}</h4>
+                    <h2 class="text-2xl font-bold text-gray-900 serif-font leading-tight mb-2">
+                        <a href="#" onclick="event.preventDefault(); openIframeModal('${url}', 'Fragrantica: ${escapedName}')" 
+                           class="hover:text-amber-600 transition-colors">${highlightedName}</a>
+                    </h2>
+                    <p class="text-sm text-gray-500 italic mb-4">${family}</p>
+
+                    <div class="mb-4">
+                        ${accords.slice(0, 10).map(acc => `<span class="accord-pill border border-gray-100">${highlightText(acc, currentSearchQuery)}</span>`).join('')}
+                    </div>
+
+                    <button onclick="toggleDetails('${data._id}')" id="btn_${data._id}" 
+                        class="w-full mt-2 py-2 px-4 bg-gray-900 text-white text-sm font-medium rounded hover:bg-gray-700 transition-colors flex items-center justify-center gap-2">
+                        <span>Show Full Profile</span>
+                        <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            `;
+
+            // --- EXPANDED SECTION ---
+            html += `
+                <div id="details_${data._id}" class="hidden bg-gray-50 border-t border-gray-100 p-6 text-sm">
+                    
+                    <!-- Pyramid with Clickable Notes -->
+                    <div class="mb-6 space-y-3">
+                        <h5 class="font-bold text-gray-900 border-b border-gray-200 pb-1 mb-2">Olfactory Pyramid (Click note for definition)</h5>
+                        
+                        <div class="flex gap-2 items-start">
+                            <span class="font-semibold w-16 text-gray-500 text-xs uppercase pt-1">Top</span>
+                            <span class="text-gray-800 flex-1">${window.renderNotesList(data['Notes Breakdown - Top'])}</span>
+                        </div>
+                        <div class="flex gap-2 items-start">
+                            <span class="font-semibold w-16 text-gray-500 text-xs uppercase pt-1">Heart</span>
+                            <span class="text-gray-800 flex-1">${window.renderNotesList(data['Notes Breakdown - Middle'])}</span>
+                        </div>
+                        <div class="flex gap-2 items-start">
+                            <span class="font-semibold w-16 text-gray-500 text-xs uppercase pt-1">Base</span>
+                            <span class="text-gray-800 flex-1">${window.renderNotesList(data['Notes Breakdown - Base'])}</span>
+                        </div>
+                        ${!notesDataLoaded ? '<p class="text-xs text-red-500 italic mt-2">Load Note Definitions CSV to enable note lookup.</p>' : ''}
+                    </div>
+
+                    <!-- Performance -->
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div class="bg-white p-3 rounded border border-gray-200">
+                            <div class="text-xs text-gray-400 uppercase">Sillage</div>
+                            <div class="font-medium text-gray-800">${data['Sillage Performance'] || 'N/A'}</div>
+                        </div>
+                        <div class="bg-white p-3 rounded border border-gray-200">
+                            <div class="text-xs text-gray-400 uppercase">Longevity</div>
+                            <div class="font-medium text-gray-800">${data['Longevity Performance'] || 'N/A'}</div>
+                        </div>
+                        <div class="bg-white p-3 rounded border border-gray-200">
+                            <div class="text-xs text-gray-400 uppercase">Gender</div>
+                            <div class="font-medium text-gray-800">${data['Wearability Gender'] || 'N/A'}</div>
+                        </div>
+                        <div class="bg-white p-3 rounded border border-gray-200">
+                            <div class="text-xs text-gray-400 uppercase">Season</div>
+                            <div class="font-medium text-gray-800">${data['Wearability Best Seasons'] || 'N/A'}</div>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mb-6">
+                        <h5 class="font-bold text-gray-900 border-b border-gray-200 pb-1 mb-2">Characteristics</h5>
+                        <p class="text-gray-600 leading-relaxed">${highlightedDescription}</p>
+                    </div>
+
+                    <!-- Technical Data Table -->
+                    <div class="overflow-x-auto">
+                        <h5 class="font-bold text-gray-900 border-b border-gray-200 pb-1 mb-2">Collection Data</h5>
+                        <table class="w-full text-left border-collapse">
+                            <tbody>
+                                <tr class="border-b border-gray-200"><th class="py-1 font-medium text-gray-500 w-1/3">Batch</th><td class="py-1 text-gray-800 font-mono">${highlightText(data['Batch number'] || '-', currentSearchQuery)}</td></tr>
+                                <tr class="border-b border-gray-200"><th class="py-1 font-medium text-gray-500">Produced</th><td class="py-1 text-gray-800">${highlightText(data['Production date'] || '-', currentSearchQuery)}</td></tr>
+                                <tr class="border-b border-gray-200"><th class="py-1 font-medium text-gray-500">Opened</th><td class="py-1 text-gray-800">${highlightText(data['Opened'] || '-', currentSearchQuery)}</td></tr>
+                                <tr class="border-b border-gray-200"><th class="py-1 font-medium text-gray-500">Volume</th><td class="py-1 text-gray-800">${highlightText(data['Bottle volume (ml)'] || '-', currentSearchQuery)} ml</td></tr>
+                                <tr class="border-b border-gray-200"><th class="py-1 font-medium text-gray-500">Perfumer</th><td class="py-1 text-gray-800">${highlightText(data['Perfumer'] || '-', currentSearchQuery)}</td></tr>
+                                
+                                <tr class="border-b border-gray-200"><th class="py-1 font-medium text-gray-500">Barcode</th><td class="py-1 text-gray-800 font-mono">${highlightText(data['Barcode'] || '-', currentSearchQuery)}</td></tr>
+                                <tr class="border-b border-gray-200"><th class="py-1 font-medium text-gray-500">Extra Info</th><td class="py-1 text-gray-800">${highlightText(data['Extra information'] || '-', currentSearchQuery)}</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    ${ingredients ? `
+                    <div class="mt-4 pt-4 border-t border-gray-200">
+                        <div class="text-xs text-gray-400 uppercase mb-1">Ingredients</div>
+                        <p class="text-xs text-gray-400 leading-tight break-words">${highlightedIngredients.substring(0, INGREDIENT_DISPLAY_LIMIT)}${ingredients.length > INGREDIENT_DISPLAY_LIMIT ? '...' : ''}</p>
+                    </div>` : ''}
+
+                    <div class="mt-6 text-center space-y-3">
+                        <!-- Fragrantica Link -->
+                        <a href="#" onclick="event.preventDefault(); openIframeModal('${url}', 'Fragrantica: ${escapedName}')" 
+                           class="text-amber-600 hover:text-amber-800 text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-1">
+                            Visit Fragrantica Page <i data-lucide="external-link" class="w-3 h-3"></i>
+                        </a>
+                        
+                        <!-- Price Check Link (Opens in new tab) -->
+                        <a href="#" onclick="event.preventDefault(); openPriceModal('${escapedBrand}', '${escapedName}', '${escapedConcentration}')" 
+                           class="text-sky-600 hover:text-sky-800 text-xs font-bold uppercase tracking-wide flex items-center justify-center gap-1">
+                            Check Current Prices <i data-lucide="shopping-cart" class="w-3 h-3"></i>
+                        </a>
+                    </div>
+                </div>
+            `;
+
+            div.innerHTML = html;
+            return div;
+        }
+
+
+        // --- 4. MODAL FUNCTIONS ---
+        window.closeModal = function() {
+            modal.classList.add('hidden');
+            modalContentArea.innerHTML = '';
+            modalHeader.classList.add('hidden');
+            // Reset modal size
+            modalContent.style.maxWidth = '90%';
+            modalContent.style.width = 'auto';
+            modalContent.style.height = 'auto';
+        }
+
+        window.openNoteDefinitionModal = function(noteName) {
+            const normalizedNote = noteName.trim();
+            let description = allNotes.get(normalizedNote);
+            if (!description) {
+                description = allNotes.get(normalizedNote.toLowerCase());
+            }
+            
+            modalTitle.textContent = `Definition: ${noteName}`;
+            modalHeader.classList.remove('hidden');
+
+            let contentHtml;
+            if (description) {
+                // Highlight the description text as well
+                const highlightedDescription = highlightText(description, currentSearchQuery);
+
+                contentHtml = `
+                    <div class="p-8 w-full">
+                        <p class="text-gray-700 leading-relaxed whitespace-pre-wrap">${highlightedDescription}</p>
+                    </div>
+                `;
+            } else {
+                contentHtml = `
+                    <div class="p-8 w-full text-center">
+                        <i data-lucide="alert-circle" class="mx-auto w-8 h-8 text-red-500 mb-3"></i>
+                        <p class="text-gray-600">Note definition for "${noteName}" not found in the loaded CSV.</p>
+                        <p class="text-xs text-gray-400 mt-2">Ensure the note name matches exactly in your definition file (case sensitivity is handled for lowercase lookups).</p>
+                    </div>
+                `;
+            }
+            
+            modalContentArea.innerHTML = contentHtml;
+            
+            // Adjust modal size for note text
+            modalContent.style.maxWidth = '600px';
+            modalContent.style.width = 'auto';
+            modalContent.style.height = 'auto';
+
+            modal.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        window.openImageModal = function(imageUrl, title) { 
+            modalContentArea.innerHTML = `
+                <div class="modal-image-container flex flex-col items-center justify-center p-8 bg-gray-50 w-full h-full">
+                    <img src="${imageUrl}" alt="${title} Bottle Preview" class="max-w-full max-h-[80vh] object-contain rounded-lg shadow-xl"
+                         onerror="this.onerror=null; this.src='https://placehold.co/400x400/CCCCCC/333333?text=Image+Unavailable';">
+                    <p class="mt-4 text-center text-sm text-gray-600">${title}</p>
+                </div>
+            `;
+            const content = modal.querySelector('.modal-content');
+            content.style.maxWidth = '900px';
+            content.style.width = 'auto';
+            content.style.height = 'auto';
+            
+            modalHeader.classList.add('hidden');
+            modal.classList.remove('hidden');
+        }
+
+        window.openIframeModal = function(iframeUrl, title) { 
+            modalTitle.textContent = title;
+            modalHeader.classList.remove('hidden');
+            
+            modalContentArea.innerHTML = `
+                <div class="iframe-container">
+                    <iframe src="${iframeUrl}" 
+                            class="w-full h-full border-0 rounded-b-xl" 
+                            allowfullscreen>
+                    </iframe>
+                </div>
+            `;
+            
+            const content = modal.querySelector('.modal-content');
+            content.style.maxWidth = '90%';
+            content.style.width = '90vw';
+            content.style.height = '90vh';
+
+            modal.classList.remove('hidden');
+        }
+
+        window.openPriceModal = function(brand, name, concentration) { 
+            const rawQuery = `${brand} ${name} ${concentration}`.trim();
+            if (!rawQuery) {
+                console.error("Cannot search for prices: Missing required fragrance data.");
+                window.open("https://www.google.com/search?q=fragrance+prices&tbm=shop", '_blank');
+                return;
+            }
+            const searchQuery = encodeURIComponent(rawQuery);
+            const shoppingUrl = `https://www.google.com/search?q=${searchQuery}&tbm=shop`;
+            window.open(shoppingUrl, '_blank');
+        }
+
+        // --- 5. FILE LOADING LOGIC ---
+        
+        function parseCSV(file, callback) {
+            let config = {
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    if (results.data && results.data.length > 0) {
+                        callback(results.data);
+                    } else {
+                        console.error("CSV file was empty or could not be parsed.");
+                        document.getElementById('resultCount').textContent = `ERROR: File was empty.`;
+                    }
+                },
+                error: function(error, file) {
+                    console.error("PapaParse failed to process CSV:", error);
+                    document.getElementById('resultCount').textContent = `ERROR: Could not process file. Check console.`;
+                }
+            };
+            Papa.parse(file, config);
+        }
+
+        function attemptAutomaticLoad(filePath, callback) {
+            Papa.parse(filePath, {
+                download: true, 
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    if (results.data && results.data.length > 0) {
+                        callback(results.data);
+                    } else {
+                        console.warn(`File ${filePath} found but empty.`);
+                    }
+                },
+                error: function(error, file) {
+                    console.info(`Automatic load of ${filePath} failed (CORS likely). Using manual upload.`);
+                }
+            });
+        }
+
+        // --- 6. INITIALIZATION & EVENT LISTENERS ---
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            updateStatus();
+            
+            // 1. Initial Load Attempts (Will likely fail on local file://)
+            attemptAutomaticLoad(AUTO_FRAGRANCE_FILE, processData);
+            attemptAutomaticLoad(AUTO_NOTES_FILE, processNotesData);
+            
+            // 2. Setup Manual File Load Listeners
+            document.getElementById('fragranceFileInput').addEventListener('change', (event) => {
+                if (event.target.files.length > 0) {
+                    document.getElementById('resultCount').textContent = `Loading Fragrance Catalog...`;
+                    parseCSV(event.target.files[0], processData); 
+                    event.target.value = ''; // Reset input to allow re-loading the same file
+                }
+            });
+
+            document.getElementById('notesFileInput').addEventListener('change', (event) => {
+                if (event.target.files.length > 0) {
+                    document.getElementById('resultCount').textContent = `Loading Note Definitions...`;
+                    parseCSV(event.target.files[0], processNotesData); 
+                    event.target.value = ''; // Reset input to allow re-loading the same file
+                }
+            });
+            
+            // 3. Setup Search Listener
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                filterFragrances(e.target.value);
+            });
+        });
+
+        // --- 7. INTERACTION LOGIC ---
+        
+        window.toggleDetails = function(id) {
+            const details = document.getElementById(`details_${id}`);
+            const btn = document.getElementById(`btn_${id}`);
+            const btnText = btn.querySelector('span');
+            const icon = btn.querySelector('svg');
+
+            if (details.classList.contains('hidden')) {
+                details.classList.remove('hidden');
+                btnText.textContent = "Hide Details";
+                btn.classList.replace('bg-gray-900', 'bg-gray-600');
+                if(icon) icon.style.transform = "rotate(180deg)";
+            } else {
+                details.classList.add('hidden');
+                btnText.textContent = "Show Full Profile";
+                btn.classList.replace('bg-gray-600', 'bg-gray-900');
+                if(icon) icon.style.transform = "rotate(0deg)";
+                btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        };
+
+        function filterFragrances(query) {
+            if (!fragranceDataLoaded) return; // Prevent searching if no data is loaded
+
+            const lowerQuery = query.toLowerCase().trim();
+            currentSearchQuery = query.trim(); // Store the query for highlighting
+            
+            if (!lowerQuery) {
+                // When search is cleared, restore original total count
+                document.getElementById('resultCount').textContent = `${allFragrances.length} Fragrances Displayed`;
+                renderGrid(allFragrances);
+                return;
+            }
+
+            const filtered = allFragrances.filter(frag => {
+                const searchableText = [
+                    frag['Brand Name'], frag['Fragrance Name'], frag['Family'], frag['Main Accords'], 
+                    frag['Key Characteristics / Comparisons'], frag['Notes Breakdown - Top'],
+                    frag['Notes Breakdown - Middle'], frag['Notes Breakdown - Base'], frag['Concentration'],
+                    frag['Ingredients'], frag['Launch year'], frag['Bottle volume (ml)'], frag['Perfumer']
+                ].filter(Boolean).join(' ').toLowerCase();
+
+                return searchableText.includes(lowerQuery);
+            });
+
+            // FIX: Update result count after filtering
+            document.getElementById('resultCount').textContent = `${filtered.length} Fragrances Found`;
+
+            renderGrid(filtered);
+        }
+
+    </script>
+</body>
+</html>
